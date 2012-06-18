@@ -190,9 +190,12 @@ function Write-NicXML {
 	Foreach ($n in $NIC) {
 	
 		$nicName = $n.Name
+		
 		if ($filteredNICs -notcontains $nicName){
 		$nicID = $n.DeviceID
-		$nicPrivateIP = Get-WmiObject -query "Select IPAddress FROM Win32_NetworkAdapterConfiguration WHERE Index = $($nicID)" -computername $ComputerName | Select -Expand IPAddress | WHERE {$_ -notlike '*:*'}
+		$nicIP = Get-WmiObject -query "Select IPAddress FROM Win32_NetworkAdapterConfiguration WHERE Index = $($nicID)" -computername $ComputerName
+		if ($nicIP.IPAddress -ne $null){
+		$nicPrivateIP = Get-WmiObject -query "Select IPAddress FROM Win32_NetworkAdapterConfiguration WHERE Index = $($nicID)" -computername $ComputerName| Select -Expand IPAddress | WHERE {$_ -notlike '*:*'}
 		$nicSubnet = Get-WmiObject -query "Select IPSubnet FROM Win32_NetworkAdapterConfiguration WHERE Index = $($nicID)" -computername $ComputerName | Select -Expand IPSubnet | WHERE {$_ -like '*.*'}
 		$nicPublicIP = [System.Net.Dns]::GetHostAddresses($serverName) -like "*.*" | WHERE {$_ -notlike '192.168.*'} | WHERE {$_ -notlike '10.*'}
 		$nicDnsName = [System.Net.Dns]::GetHostByAddress($nicPublicIP).HostName
@@ -209,7 +212,7 @@ function Write-NicXML {
 		
 		[void]$xml.AppendChild($nicXML)
 		}
-		
+		}
 	}
 }
 
